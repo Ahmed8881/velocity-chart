@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sprint Velocity Dashboard</title>
+    <title>Sprint Velocity Analytics - Project Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * {
@@ -13,316 +13,396 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e8ba3 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
         }
 
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            background: #f5f7fa;
-            border-radius: 20px;
-            box-shadow: 0 25px 70px rgba(0,0,0,0.3);
-            overflow: hidden;
+        /* Header Navigation */
+        .navbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .navbar-brand .icon {
+            background: #3b82f6;
             color: white;
-            padding: 40px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
         }
 
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -10%;
-            width: 400px;
-            height: 400px;
-            background: rgba(255,255,255,0.1);
+        .navbar-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #64748b;
         }
 
-        .header h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 1;
+        /* Main Layout */
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px;
         }
 
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.95;
-            position: relative;
-            z-index: 1;
+        .page-header {
+            margin-bottom: 32px;
         }
 
-        .content {
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        .content-grid {
             display: grid;
-            grid-template-columns: 450px 1fr;
-            gap: 25px;
-            padding: 30px;
-            background: #f5f7fa;
+            grid-template-columns: 400px 1fr;
+            gap: 32px;
         }
 
-        .input-section {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
+        /* Sidebar */
+        .sidebar {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
             height: fit-content;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-            max-height: 85vh;
+        }
+
+        .sidebar-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-content {
+            padding: 24px;
+            max-height: 75vh;
             overflow-y: auto;
         }
 
-        .input-section::-webkit-scrollbar {
-            width: 8px;
+        /* Sprint Cards */
+        .sprint-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
         }
 
-        .input-section::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .input-section::-webkit-scrollbar-thumb {
-            background: #667eea;
-            border-radius: 10px;
-        }
-
-        .input-section h2 {
-            color: #1e3c72;
-            margin-bottom: 20px;
-            font-size: 1.6em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .sprint-input {
-            background: linear-gradient(135deg, #f8f9ff 0%, #e8eaf6 100%);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            border: 2px solid #667eea;
-            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.1);
+        .sprint-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
         }
 
         .sprint-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f5f9;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
+            background: #f8fafc;
         }
 
-        .sprint-header h3 {
-            color: #1e3c72;
-            font-size: 1.2em;
+        .sprint-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 4px;
         }
 
         .sprint-dates {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 5px;
+            font-size: 13px;
+            color: #64748b;
         }
 
-        .remove-btn {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        .remove-sprint-btn {
+            background: #ef4444;
             color: white;
             border: none;
-            padding: 8px 18px;
-            border-radius: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
-            font-size: 0.9em;
-            font-weight: 600;
-            transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+            transition: background 0.2s;
         }
 
-        .remove-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+        .remove-sprint-btn:hover {
+            background: #dc2626;
+        }
+
+        .sprint-content {
+            padding: 16px 20px;
+        }
+
+        /* Story Items */
+        .story-item {
+            display: grid;
+            grid-template-columns: 1fr 80px 40px;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: center;
         }
 
         .story-input {
-            display: grid;
-            grid-template-columns: 2fr 1fr auto;
-            gap: 10px;
-            margin-bottom: 10px;
-            align-items: center;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            transition: border-color 0.2s;
         }
 
-        .story-input input {
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 0.95em;
-            transition: all 0.3s;
-        }
-
-        .story-input input:focus {
+        .story-input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .points-input {
+            text-align: center;
         }
 
         .delete-story-btn {
-            background: #ff6b6b;
-            color: white;
-            border: none;
-            padding: 12px 18px;
-            border-radius: 8px;
+            background: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
-            font-size: 1.2em;
-            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
 
         .delete-story-btn:hover {
-            background: #ff5252;
-            transform: scale(1.1);
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fecaca;
         }
 
+        /* Buttons */
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #3b82f6;
             color: white;
             border: none;
-            padding: 14px 28px;
-            border-radius: 10px;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            font-size: 1em;
-            margin: 5px;
-            transition: all 0.3s;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            background: #2563eb;
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
-            box-shadow: 0 4px 15px rgba(72, 219, 251, 0.3);
+            background: #10b981;
         }
 
         .btn-secondary:hover {
-            box-shadow: 0 6px 20px rgba(72, 219, 251, 0.4);
+            background: #059669;
         }
 
-        .visualization-section {
+        .btn-full {
+            width: 100%;
+            justify-content: center;
+            margin: 12px 0;
+        }
+
+        .btn-group {
             display: flex;
-            flex-direction: column;
-            gap: 25px;
+            gap: 12px;
+            margin-top: 16px;
         }
 
-        .chart-section {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        /* Sprint Summary */
+        .sprint-summary {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            font-size: 13px;
         }
 
-        .chart-section h2 {
-            color: #1e3c72;
-            margin-bottom: 20px;
-            font-size: 1.6em;
+        .summary-item {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+            margin-bottom: 4px;
         }
 
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+        .summary-item:last-child {
+            margin-bottom: 0;
         }
 
-        .metric-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-            transition: all 0.3s;
-        }
-
-        .metric-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
-        }
-
-        .metric-card h3 {
-            font-size: 0.95em;
-            margin-bottom: 12px;
-            opacity: 0.95;
+        .summary-label {
+            color: #64748b;
             font-weight: 500;
         }
 
-        .metric-card p {
-            font-size: 2.5em;
-            font-weight: bold;
+        .summary-value {
+            color: #0f172a;
+            font-weight: 600;
         }
 
-        .chart-container {
-            position: relative;
-            height: 400px;
-            margin-bottom: 20px;
+        /* Main Content */
+        .main-content {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
         }
 
-        .sprint-summary {
-            margin-top: 12px;
-            padding: 12px;
-            background: white;
+        .content-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .content-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
-            font-size: 0.9em;
-            border-left: 4px solid #667eea;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s;
         }
 
-        .sprint-summary strong {
-            color: #667eea;
+        .metric-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
         }
 
-        @media (max-width: 1200px) {
-            .content {
-                grid-template-columns: 1fr;
-            }
+        .metric-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
         }
 
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1;
+        }
+
+        /* Chart Tabs */
         .chart-tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 8px;
         }
 
         .tab-btn {
-            padding: 12px 24px;
-            border: 2px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 10px;
+            background: transparent;
+            color: #64748b;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            flex: 1;
+            text-align: center;
         }
 
         .tab-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #ffffff;
+            color: #0f172a;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        .tab-btn:hover {
-            transform: translateY(-2px);
+        .tab-btn:hover:not(.active) {
+            color: #0f172a;
+        }
+
+        /* Chart Container */
+        .chart-section {
+            padding: 32px;
         }
 
         .chart-wrapper {
@@ -332,53 +412,139 @@
         .chart-wrapper.active {
             display: block;
         }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .navbar {
+                padding: 0 16px;
+            }
+            
+            .container {
+                padding: 16px;
+            }
+        }
+
+        /* Scrollbar Styling */
+        .sidebar-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
 <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <div class="icon">📊</div>
+            <span>ProjectFlow Analytics</span>
+        </div>
+        <div class="navbar-actions">
+            <span class="status-badge">Sprint Planning</span>
+            <div class="user-avatar">PM</div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
     <div class="container">
-        <div class="header">
-            <h1>🚀 Sprint Velocity Dashboard</h1>
-            <p>Professional Agile Sprint Analytics & Performance Tracking</p>
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">Sprint Velocity Analytics</h1>
+            <p class="page-subtitle">Track and analyze team performance across sprint cycles</p>
         </div>
 
-        <div class="content">
-            <div class="input-section">
-                <h2>📊 Sprint Configuration</h2>
-                <div id="sprintsContainer"></div>
-                <button class="btn" onclick="addSprint()">+ Add Sprint</button>
-                <button class="btn btn-secondary" onclick="generateCharts()">🎯 Generate Analytics</button>
+        <!-- Content Grid -->
+        <div class="content-grid">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h2 class="sidebar-title">
+                        <span>⚙️</span>
+                        Sprint Configuration
+                    </h2>
+                </div>
+                <div class="sidebar-content" id="sprintsContainer">
+                    <!-- Sprint cards will be added here -->
+                </div>
+                <div class="btn-group" style="padding: 0 24px 24px;">
+                    <button class="btn btn-full" onclick="addSprint()">+ Add Sprint</button>
+                    <button class="btn btn-secondary btn-full" onclick="generateCharts()">📈 Update Analytics</button>
+                </div>
             </div>
 
-            <div class="visualization-section">
-                <div class="chart-section">
-                    <h2>📈 Performance Metrics</h2>
-                    <div class="metrics">
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="content-header">
+                    <h2 class="content-title">
+                        <span>📈</span>
+                        Performance Dashboard
+                    </h2>
+                    
+                    <!-- Metrics Grid -->
+                    <div class="metrics-grid">
                         <div class="metric-card">
-                            <h3>Total Sprints</h3>
-                            <p id="totalSprints">0</p>
+                            <div class="metric-label">Total Sprints</div>
+                            <div class="metric-value" id="totalSprints">0</div>
                         </div>
                         <div class="metric-card">
-                            <h3>Avg Velocity</h3>
-                            <p id="avgVelocity">0</p>
+                            <div class="metric-label">Avg Velocity</div>
+                            <div class="metric-value" id="avgVelocity">0</div>
                         </div>
                         <div class="metric-card">
-                            <h3>Total Points</h3>
-                            <p id="totalPoints">0</p>
+                            <div class="metric-label">Total Points</div>
+                            <div class="metric-value" id="totalPoints">0</div>
                         </div>
                         <div class="metric-card">
-                            <h3>Peak Sprint</h3>
-                            <p id="peakSprint">-</p>
+                            <div class="metric-label">Peak Sprint</div>
+                            <div class="metric-value" id="peakSprint">-</div>
                         </div>
                         <div class="metric-card">
-                            <h3>Trend</h3>
-                            <p id="trend">-</p>
+                            <div class="metric-label">Trend</div>
+                            <div class="metric-value" id="trend">-</div>
                         </div>
                     </div>
+                </div>
 
+                <!-- Chart Section -->
+                <div class="chart-section">
                     <div class="chart-tabs">
-                        <button class="tab-btn active" onclick="switchTab('bar')">📊 Bar Chart</button>
-                        <button class="tab-btn" onclick="switchTab('line')">📈 Line Chart</button>
-                        <button class="tab-btn" onclick="switchTab('combo')">🎯 Combined View</button>
+                        <button class="tab-btn active" onclick="switchTab('bar')">Bar Chart</button>
+                        <button class="tab-btn" onclick="switchTab('line')">Line Chart</button>
+                        <button class="tab-btn" onclick="switchTab('combo')">Combined View</button>
                     </div>
 
                     <div id="barChart" class="chart-wrapper active">
@@ -407,13 +573,13 @@
         let sprintCount = 0;
         let charts = { bar: null, line: null, combo: null };
         let sprintsData = {};
-        let startDate = new Date('2024-10-13'); // Starting from 13 Oct
+        let startDate = new Date('2024-10-13');
 
         function getSprintDates(sprintNumber) {
             const sprintStart = new Date(startDate);
-            sprintStart.setDate(sprintStart.getDate() + (sprintNumber - 1) * 7);
+            sprintStart.setDate(sprintStart.getDate() + (sprintNumber - 1) * 14); // 2-week sprints
             const sprintEnd = new Date(sprintStart);
-            sprintEnd.setDate(sprintEnd.getDate() + 6);
+            sprintEnd.setDate(sprintEnd.getDate() + 13);
             
             return {
                 start: sprintStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -429,29 +595,39 @@
 
             const container = document.getElementById('sprintsContainer');
             const sprintDiv = document.createElement('div');
-            sprintDiv.className = 'sprint-input';
+            sprintDiv.className = 'sprint-card';
             sprintDiv.id = sprintId;
             sprintDiv.innerHTML = `
                 <div class="sprint-header">
-                    <div>
+                    <div class="sprint-info">
                         <h3>Sprint ${sprintCount}</h3>
                         <div class="sprint-dates">${dates.start} - ${dates.end}</div>
                     </div>
-                    <button class="remove-btn" onclick="removeSprint('${sprintId}')">Remove</button>
+                    <button class="remove-sprint-btn" onclick="removeSprint('${sprintId}')">Remove</button>
                 </div>
-                <div id="${sprintId}-stories">
-                    <div class="story-input">
-                        <input type="text" placeholder="User Story Title" onchange="updateStory('${sprintId}', 0, 'title', this.value)">
-                        <input type="number" placeholder="Points" min="0" onchange="updateStory('${sprintId}', 0, 'points', this.value)">
-                        <button class="delete-story-btn" onclick="deleteStory('${sprintId}', 0)">×</button>
+                <div class="sprint-content">
+                    <div id="${sprintId}-stories">
+                        <div class="story-item">
+                            <input type="text" class="story-input" placeholder="Enter user story title..." onchange="updateStory('${sprintId}', 0, 'title', this.value)">
+                            <input type="number" class="story-input points-input" placeholder="SP" min="0" onchange="updateStory('${sprintId}', 0, 'points', this.value)">
+                            <button class="delete-story-btn" onclick="deleteStory('${sprintId}', 0)">×</button>
+                        </div>
                     </div>
-                </div>
-                <button class="btn" style="width: 100%;" onclick="addStory('${sprintId}')">+ Add User Story</button>
-                <div class="sprint-summary" id="${sprintId}-summary">
-                    <strong>Total Points:</strong> 0 | <strong>Stories:</strong> 0
+                    <button class="btn btn-full" onclick="addStory('${sprintId}')">+ Add Story</button>
+                    <div class="sprint-summary" id="${sprintId}-summary">
+                        <div class="summary-item">
+                            <span class="summary-label">Total Points:</span>
+                            <span class="summary-value">0</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Stories:</span>
+                            <span class="summary-value">0</span>
+                        </div>
+                    </div>
                 </div>
             `;
             container.appendChild(sprintDiv);
+            updateSprintSummary(sprintId);
         }
 
         function removeSprint(sprintId) {
@@ -466,20 +642,22 @@
 
             const storiesContainer = document.getElementById(`${sprintId}-stories`);
             const storyDiv = document.createElement('div');
-            storyDiv.className = 'story-input';
+            storyDiv.className = 'story-item';
             storyDiv.id = `${sprintId}-story${storyIndex}`;
             storyDiv.innerHTML = `
-                <input type="text" placeholder="User Story Title" onchange="updateStory('${sprintId}', ${storyIndex}, 'title', this.value)">
-                <input type="number" placeholder="Points" min="0" onchange="updateStory('${sprintId}', ${storyIndex}, 'points', this.value)">
+                <input type="text" class="story-input" placeholder="Enter user story title..." onchange="updateStory('${sprintId}', ${storyIndex}, 'title', this.value)">
+                <input type="number" class="story-input points-input" placeholder="SP" min="0" onchange="updateStory('${sprintId}', ${storyIndex}, 'points', this.value)">
                 <button class="delete-story-btn" onclick="deleteStory('${sprintId}', ${storyIndex})">×</button>
             `;
             storiesContainer.appendChild(storyDiv);
         }
 
         function deleteStory(sprintId, storyIndex) {
-            sprintsData[sprintId].stories.splice(storyIndex, 1);
-            document.getElementById(`${sprintId}-story${storyIndex}`).remove();
-            updateSprintSummary(sprintId);
+            if (sprintsData[sprintId].stories.length > 1) {
+                sprintsData[sprintId].stories.splice(storyIndex, 1);
+                document.getElementById(`${sprintId}-story${storyIndex}`).remove();
+                updateSprintSummary(sprintId);
+            }
         }
 
         function updateStory(sprintId, storyIndex, field, value) {
@@ -497,7 +675,14 @@
             const totalStories = sprint.stories.length;
             
             document.getElementById(`${sprintId}-summary`).innerHTML = `
-                <strong>Total Points:</strong> ${totalPoints} | <strong>Stories:</strong> ${totalStories}
+                <div class="summary-item">
+                    <span class="summary-label">Total Points:</span>
+                    <span class="summary-value">${totalPoints}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Stories:</span>
+                    <span class="summary-value">${totalStories}</span>
+                </div>
             `;
         }
 
@@ -533,9 +718,9 @@
             let trend = '-';
             if (velocityData.length >= 2) {
                 const lastTwo = velocityData.slice(-2);
-                if (lastTwo[1] > lastTwo[0]) trend = '📈';
-                else if (lastTwo[1] < lastTwo[0]) trend = '📉';
-                else trend = '➡️';
+                if (lastTwo[1] > lastTwo[0]) trend = '↗️';
+                else if (lastTwo[1] < lastTwo[0]) trend = '↘️';
+                else trend = '→';
             }
 
             document.getElementById('totalSprints').textContent = totalSprints;
@@ -544,13 +729,9 @@
             document.getElementById('peakSprint').textContent = peakSprintIndex >= 0 ? `S${peakSprintIndex + 1}` : '-';
             document.getElementById('trend').textContent = trend;
 
-            // Create Bar Chart
+            // Create charts
             createBarChart(sprintLabels, velocityData, avgVelocity, sprintDates);
-            
-            // Create Line Chart
             createLineChart(sprintLabels, velocityData, avgVelocity, sprintDates);
-            
-            // Create Combo Chart
             createComboChart(sprintLabels, velocityData, avgVelocity, sprintDates);
         }
 
@@ -563,27 +744,42 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Velocity (Story Points)',
+                        label: 'Sprint Velocity',
                         data: data,
-                        backgroundColor: data.map((value, index) => {
-                            const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b'];
-                            return colors[index % colors.length];
+                        backgroundColor: data.map(value => {
+                            const avgVal = parseFloat(avg);
+                            if (value > avgVal) return '#10b981';
+                            else if (value < avgVal) return '#f59e0b';
+                            else return '#3b82f6';
                         }),
-                        borderColor: data.map((value, index) => {
-                            const colors = ['#5568d3', '#6a3d8f', '#e082ea', '#3d9be9', '#38d66a'];
-                            return colors[index % colors.length];
+                        borderColor: data.map(value => {
+                            const avgVal = parseFloat(avg);
+                            if (value > avgVal) return '#059669';
+                            else if (value < avgVal) return '#d97706';
+                            else return '#2563eb';
                         }),
-                        borderWidth: 2,
-                        borderRadius: 8,
-                        hoverBackgroundColor: '#fa8bff'
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        borderSkipped: false,
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: true, position: 'top' },
+                        legend: { 
+                            display: true,
+                            labels: {
+                                color: '#64748b',
+                                font: { size: 12 }
+                            }
+                        },
                         tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#f1f5f9',
+                            borderColor: '#334155',
+                            borderWidth: 1,
                             callbacks: {
                                 afterLabel: function(context) {
                                     return dates[context.dataIndex];
@@ -594,11 +790,23 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: { display: true, text: 'Story Points', font: { size: 14, weight: 'bold' } },
-                            grid: { color: 'rgba(0,0,0,0.05)' }
+                            title: { 
+                                display: true, 
+                                text: 'Story Points',
+                                color: '#64748b',
+                                font: { size: 12, weight: '500' }
+                            },
+                            ticks: { color: '#64748b' },
+                            grid: { color: '#e2e8f0' }
                         },
                         x: {
-                            title: { display: true, text: 'Sprint Timeline', font: { size: 14, weight: 'bold' } },
+                            title: { 
+                                display: true, 
+                                text: 'Sprint Timeline',
+                                color: '#64748b',
+                                font: { size: 12, weight: '500' }
+                            },
+                            ticks: { color: '#64748b' },
                             grid: { display: false }
                         }
                     }
@@ -617,22 +825,22 @@
                     datasets: [{
                         label: 'Velocity Trend',
                         data: data,
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        borderWidth: 3,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
                         fill: true,
                         tension: 0.4,
-                        pointRadius: 8,
-                        pointHoverRadius: 12,
-                        pointBackgroundColor: '#667eea',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 3
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2
                     }, {
                         label: 'Average Velocity',
                         data: Array(data.length).fill(avg),
-                        borderColor: '#ff6b6b',
-                        borderWidth: 3,
-                        borderDash: [10, 5],
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
                         fill: false,
                         pointRadius: 0
                     }]
@@ -641,8 +849,19 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: true, position: 'top' },
+                        legend: { 
+                            display: true,
+                            labels: {
+                                color: '#64748b',
+                                font: { size: 12 }
+                            }
+                        },
                         tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#f1f5f9',
+                            borderColor: '#334155',
+                            borderWidth: 1,
                             callbacks: {
                                 afterLabel: function(context) {
                                     return dates[context.dataIndex];
@@ -653,10 +872,24 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: { display: true, text: 'Story Points', font: { size: 14, weight: 'bold' } }
+                            title: { 
+                                display: true, 
+                                text: 'Story Points',
+                                color: '#64748b',
+                                font: { size: 12, weight: '500' }
+                            },
+                            ticks: { color: '#64748b' },
+                            grid: { color: '#e2e8f0' }
                         },
                         x: {
-                            title: { display: true, text: 'Sprint Timeline', font: { size: 14, weight: 'bold' } }
+                            title: { 
+                                display: true, 
+                                text: 'Sprint Timeline',
+                                color: '#64748b',
+                                font: { size: 12, weight: '500' }
+                            },
+                            ticks: { color: '#64748b' },
+                            grid: { color: '#e2e8f0' }
                         }
                     }
                 }
@@ -675,30 +908,30 @@
                         type: 'bar',
                         label: 'Sprint Velocity',
                         data: data,
-                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
-                        borderColor: '#667eea',
-                        borderWidth: 2,
-                        borderRadius: 8
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1,
+                        borderRadius: 4
                     }, {
                         type: 'line',
                         label: 'Trend Line',
                         data: data,
-                        borderColor: '#f093fb',
-                        backgroundColor: 'rgba(240, 147, 251, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: false,
                         tension: 0.4,
-                        pointRadius: 6,
-                        pointBackgroundColor: '#f093fb',
-                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#ffffff',
                         pointBorderWidth: 2
                     }, {
                         type: 'line',
                         label: 'Average',
                         data: Array(data.length).fill(avg),
-                        borderColor: '#43e97b',
+                        borderColor: '#ef4444',
                         borderWidth: 2,
-                        borderDash: [8, 4],
+                        borderDash: [5, 5],
                         fill: false,
                         pointRadius: 0
                     }]
@@ -707,8 +940,19 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: true, position: 'top' },
+                        legend: { 
+                            display: true,
+                            labels: {
+                                color: '#64748b',
+                                font: { size: 12 }
+                            }
+                        },
                         tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#f1f5f9',
+                            borderColor: '#334155',
+                            borderWidth: 1,
                             callbacks: {
                                 afterLabel: function(context) {
                                     return dates[context.dataIndex];
@@ -719,17 +963,31 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: { display: true, text: 'Story Points', font: { size: 14, weight: 'bold' } }
+                            title: { 
+                                display: true, 
+                                text: 'Story Points',
+                                color: '#64748b',
+                                font: { size: 12, weight: '500' }
+                            },
+                            ticks: { color: '#64748b' },
+                            grid: { color: '#e2e8f0' }
                         },
                         x: {
-                            title: { display: true, text: 'Sprint Timeline', font: { size: 14, weight: 'bold' } }
+                            title: { 
+                                display: true, 
+                                text: 'Sprint Timeline',
+                                color: '#64748b',
+                                font: { size: 12, weight: '500' }
+                            },
+                            ticks: { color: '#64748b' },
+                            grid: { color: '#e2e8f0' }
                         }
                     }
                 }
             });
         }
 
-        // Initialize with one sprint
+        // Initialize with first sprint
         addSprint();
     </script>
 </body>
