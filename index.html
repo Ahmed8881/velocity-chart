@@ -187,6 +187,54 @@
             padding: 16px 20px;
         }
 
+        /* Enhanced Sprint Content */
+        .sprint-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .metric-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .metric-input-group label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .metric-input {
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .metric-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .capacity-info {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+
+        .capacity-info .ratio {
+            font-weight: 600;
+            color: #0369a1;
+        }
+
         /* Story Items */
         .story-item {
             display: grid;
@@ -591,7 +639,12 @@
             sprintCount++;
             const sprintId = `sprint${sprintCount}`;
             const dates = getSprintDates(sprintCount);
-            sprintsData[sprintId] = { stories: [{ title: '', points: 0 }], number: sprintCount };
+            sprintsData[sprintId] = { 
+                stories: [{ title: '', points: 0 }], 
+                number: sprintCount,
+                capacity: 0,
+                velocity: 0
+            };
 
             const container = document.getElementById('sprintsContainer');
             const sprintDiv = document.createElement('div');
@@ -606,10 +659,27 @@
                     <button class="remove-sprint-btn" onclick="removeSprint('${sprintId}')">Remove</button>
                 </div>
                 <div class="sprint-content">
+                    <div class="sprint-metrics">
+                        <div class="metric-input-group">
+                            <label>Sprint Capacity</label>
+                            <input type="number" class="metric-input" placeholder="0" min="0" 
+                                   onchange="updateSprintMetric('${sprintId}', 'capacity', this.value)">
+                        </div>
+                        <div class="metric-input-group">
+                            <label>Target Velocity</label>
+                            <input type="number" class="metric-input" placeholder="0" min="0" 
+                                   onchange="updateSprintMetric('${sprintId}', 'velocity', this.value)">
+                        </div>
+                    </div>
+                    <div class="capacity-info" id="${sprintId}-capacity-info">
+                        <div>Velocity/Capacity Ratio: <span class="ratio">0%</span></div>
+                    </div>
                     <div id="${sprintId}-stories">
                         <div class="story-item">
-                            <input type="text" class="story-input" placeholder="Enter user story title..." onchange="updateStory('${sprintId}', 0, 'title', this.value)">
-                            <input type="number" class="story-input points-input" placeholder="SP" min="0" onchange="updateStory('${sprintId}', 0, 'points', this.value)">
+                            <input type="text" class="story-input" placeholder="Enter user story title..." 
+                                   onchange="updateStory('${sprintId}', 0, 'title', this.value)">
+                            <input type="number" class="story-input points-input" placeholder="SP" min="0" 
+                                   onchange="updateStory('${sprintId}', 0, 'points', this.value)">
                             <button class="delete-story-btn" onclick="deleteStory('${sprintId}', 0)">×</button>
                         </div>
                     </div>
@@ -660,6 +730,27 @@
             }
         }
 
+        function updateSprintMetric(sprintId, metric, value) {
+            sprintsData[sprintId][metric] = parseInt(value) || 0;
+            updateCapacityInfo(sprintId);
+        }
+
+        function updateCapacityInfo(sprintId) {
+            const sprint = sprintsData[sprintId];
+            const actualVelocity = sprint.stories.reduce((sum, story) => sum + (story.points || 0), 0);
+            const capacity = sprint.capacity || 1; // Avoid division by zero
+            const ratio = capacity > 0 ? ((actualVelocity / capacity) * 100).toFixed(1) : 0;
+            
+            let ratioColor = '#0369a1'; // Default blue
+            if (ratio > 100) ratioColor = '#dc2626'; // Red if over capacity
+            else if (ratio > 80) ratioColor = '#ea580c'; // Orange if near capacity
+            else if (ratio > 60) ratioColor = '#65a30d'; // Green if good utilization
+
+            document.getElementById(`${sprintId}-capacity-info`).innerHTML = `
+                <div>Velocity/Capacity Ratio: <span class="ratio" style="color: ${ratioColor}">${ratio}%</span></div>
+            `;
+        }
+
         function updateStory(sprintId, storyIndex, field, value) {
             if (field === 'points') {
                 sprintsData[sprintId].stories[storyIndex][field] = parseInt(value) || 0;
@@ -667,6 +758,7 @@
                 sprintsData[sprintId].stories[storyIndex][field] = value;
             }
             updateSprintSummary(sprintId);
+            updateCapacityInfo(sprintId);
         }
 
         function updateSprintSummary(sprintId) {
@@ -697,15 +789,22 @@
         function generateCharts() {
             const sprintLabels = [];
             const velocityData = [];
+            const capacityData = [];
+            const ratioData = [];
             const sprintDates = [];
 
             Object.keys(sprintsData).sort((a, b) => sprintsData[a].number - sprintsData[b].number).forEach(sprintId => {
                 const sprint = sprintsData[sprintId];
-                const velocity = sprint.stories.reduce((sum, story) => sum + (story.points || 0), 0);
+                const actualVelocity = sprint.stories.reduce((sum, story) => sum + (story.points || 0), 0);
+                const capacity = sprint.capacity || 0;
+                const ratio = capacity > 0 ? (actualVelocity / capacity) : 0;
                 const dates = getSprintDates(sprint.number);
+                
                 sprintLabels.push(`Sprint ${sprint.number}`);
                 sprintDates.push(`${dates.start} - ${dates.end}`);
-                velocityData.push(velocity);
+                velocityData.push(actualVelocity);
+                capacityData.push(capacity);
+                ratioData.push(ratio);
             });
 
             // Calculate metrics
@@ -729,13 +828,13 @@
             document.getElementById('peakSprint').textContent = peakSprintIndex >= 0 ? `S${peakSprintIndex + 1}` : '-';
             document.getElementById('trend').textContent = trend;
 
-            // Create charts
-            createBarChart(sprintLabels, velocityData, avgVelocity, sprintDates);
-            createLineChart(sprintLabels, velocityData, avgVelocity, sprintDates);
-            createComboChart(sprintLabels, velocityData, avgVelocity, sprintDates);
+            // Create charts with new data
+            createBarChart(sprintLabels, velocityData, capacityData, ratioData, avgVelocity, sprintDates);
+            createLineChart(sprintLabels, velocityData, capacityData, ratioData, avgVelocity, sprintDates);
+            createComboChart(sprintLabels, velocityData, capacityData, ratioData, avgVelocity, sprintDates);
         }
 
-        function createBarChart(labels, data, avg, dates) {
+        function createBarChart(labels, velocity, capacity, ratio, avg, dates) {
             const ctx = document.getElementById('velocityBarChart').getContext('2d');
             if (charts.bar) charts.bar.destroy();
 
@@ -744,23 +843,38 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Sprint Velocity',
-                        data: data,
-                        backgroundColor: data.map(value => {
-                            const avgVal = parseFloat(avg);
-                            if (value > avgVal) return '#10b981';
-                            else if (value < avgVal) return '#f59e0b';
-                            else return '#3b82f6';
-                        }),
-                        borderColor: data.map(value => {
-                            const avgVal = parseFloat(avg);
-                            if (value > avgVal) return '#059669';
-                            else if (value < avgVal) return '#d97706';
-                            else return '#2563eb';
-                        }),
+                        label: 'Velocity',
+                        data: velocity,
+                        backgroundColor: '#3b82f6',
+                        borderColor: '#2563eb',
                         borderWidth: 1,
+                        yAxisID: 'y',
                         borderRadius: 4,
-                        borderSkipped: false,
+                        barPercentage: 0.9,
+                        categoryPercentage: 0.9
+                    }, {
+                        label: 'Capacity',
+                        data: capacity,
+                        backgroundColor: '#f59e0b',
+                        borderColor: '#d97706',
+                        borderWidth: 1,
+                        yAxisID: 'y',
+                        borderRadius: 4,
+                        barPercentage: 0.9,
+                        categoryPercentage: 0.9
+                    }, {
+                        label: 'Ratio',
+                        data: ratio,
+                        type: 'line',
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 3,
+                        yAxisID: 'y1',
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#8b5cf6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2
                     }]
                 },
                 options: {
@@ -782,6 +896,9 @@
                             borderWidth: 1,
                             callbacks: {
                                 afterLabel: function(context) {
+                                    if (context.datasetIndex === 2) {
+                                        return `Ratio: ${(context.parsed.y * 100).toFixed(1)}%`;
+                                    }
                                     return dates[context.dataIndex];
                                 }
                             }
@@ -789,6 +906,9 @@
                     },
                     scales: {
                         y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
                             beginAtZero: true,
                             title: { 
                                 display: true, 
@@ -798,6 +918,26 @@
                             },
                             ticks: { color: '#64748b' },
                             grid: { color: '#e2e8f0' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            max: Math.max(2, Math.max(...ratio) * 1.2),
+                            title: { 
+                                display: true, 
+                                text: 'Ratio',
+                                color: '#8b5cf6',
+                                font: { size: 12, weight: '500' }
+                            },
+                            ticks: { 
+                                color: '#8b5cf6',
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            },
+                            grid: { drawOnChartArea: false }
                         },
                         x: {
                             title: { 
@@ -814,7 +954,7 @@
             });
         }
 
-        function createLineChart(labels, data, avg, dates) {
+        function createLineChart(labels, velocity, capacity, ratio, avg, dates) {
             const ctx = document.getElementById('velocityLineChart').getContext('2d');
             if (charts.line) charts.line.destroy();
 
@@ -824,7 +964,7 @@
                     labels: labels,
                     datasets: [{
                         label: 'Velocity Trend',
-                        data: data,
+                        data: velocity,
                         borderColor: '#3b82f6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         borderWidth: 2,
@@ -834,15 +974,34 @@
                         pointHoverRadius: 8,
                         pointBackgroundColor: '#3b82f6',
                         pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2
+                        pointBorderWidth: 2,
+                        yAxisID: 'y'
                     }, {
-                        label: 'Average Velocity',
-                        data: Array(data.length).fill(avg),
-                        borderColor: '#ef4444',
+                        label: 'Capacity Trend',
+                        data: capacity,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
                         borderWidth: 2,
-                        borderDash: [5, 5],
                         fill: false,
-                        pointRadius: 0
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#f59e0b',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Ratio Trend',
+                        data: ratio,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#8b5cf6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        yAxisID: 'y1'
                     }]
                 },
                 options: {
@@ -864,6 +1023,9 @@
                             borderWidth: 1,
                             callbacks: {
                                 afterLabel: function(context) {
+                                    if (context.datasetIndex === 2) {
+                                        return `Ratio: ${(context.parsed.y * 100).toFixed(1)}%`;
+                                    }
                                     return dates[context.dataIndex];
                                 }
                             }
@@ -871,6 +1033,9 @@
                     },
                     scales: {
                         y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
                             beginAtZero: true,
                             title: { 
                                 display: true, 
@@ -880,6 +1045,26 @@
                             },
                             ticks: { color: '#64748b' },
                             grid: { color: '#e2e8f0' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            max: Math.max(2, Math.max(...ratio) * 1.2),
+                            title: { 
+                                display: true, 
+                                text: 'Ratio',
+                                color: '#8b5cf6',
+                                font: { size: 12, weight: '500' }
+                            },
+                            ticks: { 
+                                color: '#8b5cf6',
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            },
+                            grid: { drawOnChartArea: false }
                         },
                         x: {
                             title: { 
@@ -896,7 +1081,7 @@
             });
         }
 
-        function createComboChart(labels, data, avg, dates) {
+        function createComboChart(labels, velocity, capacity, ratio, avg, dates) {
             const ctx = document.getElementById('velocityComboChart').getContext('2d');
             if (charts.combo) charts.combo.destroy();
 
@@ -906,34 +1091,40 @@
                     labels: labels,
                     datasets: [{
                         type: 'bar',
-                        label: 'Sprint Velocity',
-                        data: data,
-                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        label: 'Velocity',
+                        data: velocity,
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
                         borderColor: '#3b82f6',
                         borderWidth: 1,
-                        borderRadius: 4
+                        borderRadius: 4,
+                        yAxisID: 'y',
+                        barPercentage: 0.9,
+                        categoryPercentage: 0.9
+                    }, {
+                        type: 'bar',
+                        label: 'Capacity',
+                        data: capacity,
+                        backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                        borderColor: '#f59e0b',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        yAxisID: 'y',
+                        barPercentage: 0.9,
+                        categoryPercentage: 0.9
                     }, {
                         type: 'line',
-                        label: 'Trend Line',
-                        data: data,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        borderWidth: 2,
+                        label: 'Ratio',
+                        data: ratio,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 3,
                         fill: false,
                         tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#10b981',
+                        pointRadius: 6,
+                        pointBackgroundColor: '#8b5cf6',
                         pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2
-                    }, {
-                        type: 'line',
-                        label: 'Average',
-                        data: Array(data.length).fill(avg),
-                        borderColor: '#ef4444',
-                        borderWidth: 2,
-                        borderDash: [5, 5],
-                        fill: false,
-                        pointRadius: 0
+                        pointBorderWidth: 2,
+                        yAxisID: 'y1'
                     }]
                 },
                 options: {
@@ -955,6 +1146,9 @@
                             borderWidth: 1,
                             callbacks: {
                                 afterLabel: function(context) {
+                                    if (context.datasetIndex === 2) {
+                                        return `Ratio: ${(context.parsed.y * 100).toFixed(1)}%`;
+                                    }
                                     return dates[context.dataIndex];
                                 }
                             }
@@ -962,6 +1156,9 @@
                     },
                     scales: {
                         y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
                             beginAtZero: true,
                             title: { 
                                 display: true, 
@@ -972,6 +1169,26 @@
                             ticks: { color: '#64748b' },
                             grid: { color: '#e2e8f0' }
                         },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            max: Math.max(2, Math.max(...ratio) * 1.2),
+                            title: { 
+                                display: true, 
+                                text: 'Ratio',
+                                color: '#8b5cf6',
+                                font: { size: 12, weight: '500' }
+                            },
+                            ticks: { 
+                                color: '#8b5cf6',
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            },
+                            grid: { drawOnChartArea: false }
+                        },
                         x: {
                             title: { 
                                 display: true, 
@@ -980,7 +1197,7 @@
                                 font: { size: 12, weight: '500' }
                             },
                             ticks: { color: '#64748b' },
-                            grid: { color: '#e2e8f0' }
+                            grid: { display: false }
                         }
                     }
                 }
