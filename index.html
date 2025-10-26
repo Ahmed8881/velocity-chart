@@ -850,8 +850,8 @@
                         borderWidth: 1,
                         yAxisID: 'y',
                         borderRadius: 4,
-                        barPercentage: 0.9,
-                        categoryPercentage: 0.9
+                        barPercentage: 1.0,
+                        categoryPercentage: 0.8
                     }, {
                         label: 'Capacity',
                         data: capacity,
@@ -860,8 +860,8 @@
                         borderWidth: 1,
                         yAxisID: 'y',
                         borderRadius: 4,
-                        barPercentage: 0.9,
-                        categoryPercentage: 0.9
+                        barPercentage: 1.0,
+                        categoryPercentage: 0.8
                     }, {
                         label: 'Ratio',
                         data: ratio,
@@ -880,6 +880,10 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
                     plugins: {
                         legend: { 
                             display: true,
@@ -1098,8 +1102,8 @@
                         borderWidth: 1,
                         borderRadius: 4,
                         yAxisID: 'y',
-                        barPercentage: 0.9,
-                        categoryPercentage: 0.9
+                        barPercentage: 1.0,
+                        categoryPercentage: 0.8
                     }, {
                         type: 'bar',
                         label: 'Capacity',
@@ -1109,8 +1113,8 @@
                         borderWidth: 1,
                         borderRadius: 4,
                         yAxisID: 'y',
-                        barPercentage: 0.9,
-                        categoryPercentage: 0.9
+                        barPercentage: 1.0,
+                        categoryPercentage: 0.8
                     }, {
                         type: 'line',
                         label: 'Ratio',
@@ -1130,6 +1134,10 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
                     plugins: {
                         legend: { 
                             display: true,
