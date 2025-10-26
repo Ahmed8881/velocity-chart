@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint Velocity Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            height: fit-content;
+        }
+
+        .input-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .sprint-input {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .sprint-input h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .remove-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .remove-btn:hover {
+            background: #ff3838;
+        }
+
+        .story-input {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .story-input input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+
+        .story-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .delete-story-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .delete-story-btn:hover {
+            background: #ff5252;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #48dbfb;
+        }
+
+        .btn-secondary:hover {
+            background: #0abde3;
+        }
+
+        .chart-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chart-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .chart-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .chart-toggle-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .chart-toggle-btn:hover {
+            background: #5568d3;
+        }
+
+        .chart-toggle-btn.active {
+            background: #ff6b6b;
+            transform: scale(1.05);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        #velocityChart {
+            max-height: 400px;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sprint-summary {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .sprint-summary strong {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Sprint Velocity Dashboard</h1>
+            <p>Track your team's velocity across multiple sprints</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <h2>Sprint Data Input</h2>
+                <div id="sprintsContainer"></div>
+                <button class="btn" onclick="addSprint()">+ Add Sprint</button>
+                <button class="btn btn-secondary" onclick="generateChart()">Generate Velocity Chart</button>
+            </div>
+
+            <div class="chart-section">
+                <h2>Velocity Metrics</h2>
+                <div class="metrics">
+                    <div class="metric-card">
+                        <h3>Total Sprints</h3>
+                        <p id="totalSprints">0</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Average Velocity</h3>
+                        <p id="avgVelocity">0</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Total Story Points</h3>
+                        <p id="totalPoints">0</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Trend</h3>
+                        <p id="trend">-</p>
+                    </div>
+                </div>
+                
+                <div class="chart-controls">
+                    <button class="chart-toggle-btn active" onclick="changeChartType('line')">Line Chart</button>
+                    <button class="chart-toggle-btn" onclick="changeChartType('bar')">Bar Chart</button>
+                    <button class="chart-toggle-btn" onclick="changeChartType('mixed')">Combined View</button>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="velocityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sprintCount = 0;
+        let chart = null;
+        let sprintsData = {};
+        let currentChartType = 'line';
+
+        function addSprint() {
+            sprintCount++;
+            const sprintId = `sprint${sprintCount}`;
+            sprintsData[sprintId] = { stories: [{ title: '', points: 0 }] };
+
+            const container = document.getElementById('sprintsContainer');
+            const sprintDiv = document.createElement('div');
+            sprintDiv.className = 'sprint-input';
+            sprintDiv.id = sprintId;
+            sprintDiv.innerHTML = `
+                <h3>
+                    Sprint ${sprintCount}
+                    <button class="remove-btn" onclick="removeSprint('${sprintId}')">Remove Sprint</button>
+                </h3>
+                <div id="${sprintId}-stories">
+                    <div class="story-input">
+                        <input type="text" placeholder="User Story" onchange="updateStory('${sprintId}', 0, 'title', this.value)">
+                        <input type="number" placeholder="Points" min="0" onchange="updateStory('${sprintId}', 0, 'points', this.value)">
+                        <button class="delete-story-btn" onclick="deleteStory('${sprintId}', 0)">×</button>
+                    </div>
+                </div>
+                <button class="btn" onclick="addStory('${sprintId}')">+ Add Story</button>
+                <div class="sprint-summary" id="${sprintId}-summary">
+                    <strong>Total Points:</strong> 0 | <strong>Stories:</strong> 0
+                </div>
+            `;
+            container.appendChild(sprintDiv);
+        }
+
+        function removeSprint(sprintId) {
+            delete sprintsData[sprintId];
+            document.getElementById(sprintId).remove();
+            generateChart();
+        }
+
+        function addStory(sprintId) {
+            const storyIndex = sprintsData[sprintId].stories.length;
+            sprintsData[sprintId].stories.push({ title: '', points: 0 });
+
+            const storiesContainer = document.getElementById(`${sprintId}-stories`);
+            const storyDiv = document.createElement('div');
+            storyDiv.className = 'story-input';
+            storyDiv.id = `${sprintId}-story${storyIndex}`;
+            storyDiv.innerHTML = `
+                <input type="text" placeholder="User Story" onchange="updateStory('${sprintId}', ${storyIndex}, 'title', this.value)">
+                <input type="number" placeholder="Points" min="0" onchange="updateStory('${sprintId}', ${storyIndex}, 'points', this.value)">
+                <button class="delete-story-btn" onclick="deleteStory('${sprintId}', ${storyIndex})">×</button>
+            `;
+            storiesContainer.appendChild(storyDiv);
+        }
+
+        function deleteStory(sprintId, storyIndex) {
+            sprintsData[sprintId].stories.splice(storyIndex, 1);
+            document.getElementById(`${sprintId}-story${storyIndex}`).remove();
+            updateSprintSummary(sprintId);
+        }
+
+        function updateStory(sprintId, storyIndex, field, value) {
+            if (field === 'points') {
+                sprintsData[sprintId].stories[storyIndex][field] = parseInt(value) || 0;
+            } else {
+                sprintsData[sprintId].stories[storyIndex][field] = value;
+            }
+            updateSprintSummary(sprintId);
+        }
+
+        function updateSprintSummary(sprintId) {
+            const sprint = sprintsData[sprintId];
+            const totalPoints = sprint.stories.reduce((sum, story) => sum + (story.points || 0), 0);
+            const totalStories = sprint.stories.length;
+            
+            document.getElementById(`${sprintId}-summary`).innerHTML = `
+                <strong>Total Points:</strong> ${totalPoints} | <strong>Stories:</strong> ${totalStories}
+            `;
+        }
+
+        function changeChartType(type) {
+            currentChartType = type;
+            
+            // Update button states
+            document.querySelectorAll('.chart-toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            generateChart();
+        }
+
+        function generateChart() {
+            const sprintLabels = [];
+            const velocityData = [];
+
+            Object.keys(sprintsData).sort().forEach((sprintId, index) => {
+                const sprint = sprintsData[sprintId];
+                const velocity = sprint.stories.reduce((sum, story) => sum + (story.points || 0), 0);
+                sprintLabels.push(`Sprint ${index + 1}`);
+                velocityData.push(velocity);
+            });
+
+            // Calculate metrics
+            const totalSprints = velocityData.length;
+            const totalPoints = velocityData.reduce((a, b) => a + b, 0);
+            const avgVelocity = totalSprints > 0 ? (totalPoints / totalSprints).toFixed(1) : 0;
+            
+            let trend = '-';
+            if (velocityData.length >= 2) {
+                const lastTwo = velocityData.slice(-2);
+                if (lastTwo[1] > lastTwo[0]) trend = '📈';
+                else if (lastTwo[1] < lastTwo[0]) trend = '📉';
+                else trend = '➡️';
+            }
+
+            document.getElementById('totalSprints').textContent = totalSprints;
+            document.getElementById('avgVelocity').textContent = avgVelocity;
+            document.getElementById('totalPoints').textContent = totalPoints;
+            document.getElementById('trend').textContent = trend;
+
+            // Create chart based on selected type
+            const ctx = document.getElementById('velocityChart').getContext('2d');
+            
+            if (chart) {
+                chart.destroy();
+            }
+
+            let chartConfig = {};
+
+            if (currentChartType === 'line') {
+                chartConfig = {
+                    type: 'line',
+                    data: {
+                        labels: sprintLabels,
+                        datasets: [{
+                            label: 'Velocity (Story Points)',
+                            data: velocityData,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            pointBackgroundColor: '#667eea',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        }, {
+                            label: 'Average Velocity',
+                            data: Array(velocityData.length).fill(avgVelocity),
+                            borderColor: '#ff6b6b',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0
+                        }]
+                    }
+                };
+            } else if (currentChartType === 'bar') {
+                chartConfig = {
+                    type: 'bar',
+                    data: {
+                        labels: sprintLabels,
+                        datasets: [{
+                            label: 'Velocity (Story Points)',
+                            data: velocityData,
+                            backgroundColor: velocityData.map((value, index) => {
+                                const avgVal = parseFloat(avgVelocity);
+                                if (value > avgVal) return 'rgba(34, 197, 94, 0.8)'; // Green for above average
+                                else if (value < avgVal) return 'rgba(239, 68, 68, 0.8)'; // Red for below average
+                                else return 'rgba(102, 126, 234, 0.8)'; // Blue for average
+                            }),
+                            borderColor: velocityData.map((value, index) => {
+                                const avgVal = parseFloat(avgVelocity);
+                                if (value > avgVal) return '#22c55e';
+                                else if (value < avgVal) return '#ef4444';
+                                else return '#667eea';
+                            }),
+                            borderWidth: 2,
+                            borderRadius: 5,
+                            borderSkipped: false,
+                        }, {
+                            label: 'Average Velocity',
+                            data: Array(velocityData.length).fill(avgVelocity),
+                            type: 'line',
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0
+                        }]
+                    }
+                };
+            } else if (currentChartType === 'mixed') {
+                chartConfig = {
+                    type: 'bar',
+                    data: {
+                        labels: sprintLabels,
+                        datasets: [{
+                            label: 'Velocity (Story Points)',
+                            data: velocityData,
+                            backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                            borderColor: '#667eea',
+                            borderWidth: 2,
+                            borderRadius: 5,
+                            borderSkipped: false,
+                        }, {
+                            label: 'Velocity Trend',
+                            data: velocityData,
+                            type: 'line',
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        }, {
+                            label: 'Average Velocity',
+                            data: Array(velocityData.length).fill(avgVelocity),
+                            type: 'line',
+                            borderColor: '#ff6b6b',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0
+                        }]
+                    }
+                };
+            }
+
+            chartConfig.options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#667eea',
+                        borderWidth: 1,
+                        callbacks: {
+                            afterLabel: function(context) {
+                                if (context.datasetIndex === 0) {
+                                    const avg = parseFloat(avgVelocity);
+                                    const value = context.parsed.y;
+                                    const diff = ((value - avg) / avg * 100).toFixed(1);
+                                    if (value > avg) {
+                                        return `↗ ${diff}% above average`;
+                                    } else if (value < avg) {
+                                        return `↘ ${Math.abs(diff)}% below average`;
+                                    }
+                                    return '→ At average';
+                                }
+                                return '';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Story Points',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Sprints',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }
+                }
+            };
+
+            chart = new Chart(ctx, chartConfig);
+        }
+
+        // Initialize with one sprint
+        addSprint();
+    </script>
+</body>
+</html>
